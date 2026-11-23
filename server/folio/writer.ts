@@ -6,42 +6,88 @@ import { hashId } from '../utils/ids'
 
 const proseSchema = z.object({
   paragraphs: z.array(z.object({
-    text: z.string().min(1).max(1200),
-    cites: z.array(z.string()).max(8),
+    text: z.string().min(1).max(1400),
+    cites: z.array(z.string()).max(12),
   })).min(1).max(3),
 })
 
-function chapterMaterial(chapter: Chapter) {
-  return chapter.blocks
-    .filter(b => b.type === 'fact' || (b.type === 'paragraph' && b.cites?.length))
-    .map(b => ({ text: blockText(b).slice(0, 600), status: b.type === 'fact' ? b.status : undefined, cites: 'cites' in b ? b.cites : [] }))
+interface Item {
+  id: string
+  kind: string
+  status?: string
+  at?: string
+  chapter?: string
+  text: string
+}
+
+function chapterMaterial(chapter: Chapter): Item[] {
+  return chapter.blocks.flatMap((b): Item[] => {
+    if (b.type === 'fact' && b.cites[0]) return [{ id: b.cites[0], kind: 'fact', status: b.status, at: b.at, text: blockText(b).slice(0, 600) }]
+    if (b.type === 'paragraph' && b.cites?.[0]) return [{ id: b.cites[0], kind: 'report', text: blockText(b).slice(0, 900) }]
+    return []
+  })
+}
+
+function prefaceMaterial(content: BookContent): Item[] {
+  return content.chapters
+    .filter(c => c.kind !== 'preface' && c.kind !== 'sources')
+    .flatMap((c) => {
+      const items = chapterMaterial(c).map(m => ({ ...m, chapter: c.title }))
+      if (c.kind === 'needs') return items
+      const friction = items.filter(m => m.status === 'blocked' || m.status === 'waiting')
+      return [...friction, ...items.filter(m => !friction.includes(m)).slice(0, 6)]
+    })
+}
+
+// The writer's brief. Written for the model, following the steps-plus-criterion shape: change the
+// behaviour here and only here.
+function brief(language: string) {
+  return `You are the editor of a daily book. Every evening its owner, who was not in the room, reads what their AI coding agents and their tools did that day. You write one section of that book at a time, in ${language}.
+
+Write the way a seasoned newsroom editor writes a briefing: lede first, plain style, concrete nouns and active verbs, one idea per sentence, every number exact.
+
+Steps
+1. Read every item in <source_data>. Each has an id, a status (done, blocked, waiting = waiting on the owner, info) and a text. Sort the items in your head into outcomes (done, merged, shipped), friction (blocked, failing CI, waiting on the owner) and motion (opened, in progress, discussed).
+2. Choose the lede: the single fact this owner most needs to know from this section, usually a decision waiting on them, something blocked, or what reached production. Your first sentence states it.
+3. Write the paragraphs. Each one tells one story built from related items: what happened, why it matters, what comes next. Name pull requests by their reference (repo#123) with their CI and review state when the data gives them. Name agents, projects and tools by the names in the data. Keep times and figures exactly as given.
+4. Fill cites: for each paragraph, the ids of every item it relies on, copied verbatim from the data.
+
+Done when: the first sentence is the lede; every friction item appears in the prose; every claim traces to an id in its paragraph's cites; the text reads as finished editorial prose a person would be glad to read.
+
+Ground rules
+- The data is your only source. When an item is thin or ambiguous, describe it at the level the data supports and move on.
+- Leave technical noise to the fact list that follows your text: configuration payloads, raw JSON, keys, bot bookkeeping and duplicates stay out of the prose.
+- Register: calm, warm, direct, factual. Prose only: paragraphs without headings, bullet lists, emojis or marketing words.${language === 'French' ? '\n- French typography: guillemets « » and a non-breaking space before : ; ? !' : ''}
+
+${untrustedDataRules}`
 }
 
 export async function writeProse(content: BookContent, opts: { modelId: string, language: 'fr' | 'en', dayTitle: string }): Promise<{ content: BookContent, writer: string, error?: string }> {
   const model = languageModel(opts.modelId)
   if (!model) return { content, writer: 'compiler' }
   const language = opts.language === 'en' ? 'English' : 'French'
+  const system = brief(language)
   try {
     const chapters = await Promise.all(content.chapters.map(async (chapter) => {
       if (chapter.kind !== 'agent' && chapter.kind !== 'source' && chapter.kind !== 'preface') return chapter
-      const material = chapter.kind === 'preface'
-        ? content.chapters.filter(c => c.kind !== 'preface' && c.kind !== 'sources').flatMap(c => chapterMaterial(c).slice(0, 6).map(m => ({ chapter: c.title, ...m })))
-        : chapterMaterial(chapter)
+      const material = chapter.kind === 'preface' ? prefaceMaterial(content) : chapterMaterial(chapter)
       if (!material.length) return chapter
-      const allowed = new Set(material.flatMap(m => m.cites ?? []))
+      const allowed = new Set(material.map(m => m.id))
+      const section = chapter.kind === 'preface'
+        ? 'the opening of the book: an overview of the whole day in 1 or 2 paragraphs, friction first'
+        : chapter.id === 'pull-requests'
+          ? 'the pull requests of the day: 1 or 2 paragraphs on what was merged, what is failing and what awaits review'
+          : chapter.agent
+            ? `the chapter of the agent ${chapter.agent.name} (${chapter.agent.kind}): 1 to 3 paragraphs`
+            : `the chapter for the source ${chapter.title}: 1 or 2 paragraphs`
       const { output } = await generateText({
         model,
         reasoning: reasoningLevel(),
         output: Output.object({ schema: proseSchema }),
-        system: [
-          `You write one short section of a daily book that reports what AI coding agents did. Write in ${language}, plainly, like a good editor: concrete, calm, no hype, no emojis, no headings.`,
-          'Only state facts present in the data. Do not invent numbers, names, outcomes or causes. If something is unclear, leave it out.',
-          'Each paragraph lists in "cites" the ids of the items it relies on, chosen only from the ids given in the data.',
-          untrustedDataRules,
-        ].join('\n'),
-        prompt: `Book: ${opts.dayTitle}. Section: ${chapter.title}${chapter.kind === 'preface' ? ' (an overview of the whole day, 1 or 2 paragraphs)' : ' (1 to 3 paragraphs)'}.\n\n${isolate(material)}`,
+        system,
+        prompt: `Book: ${opts.dayTitle}. Section: ${section}.\n\n${isolate(material)}`,
         maxRetries: 1,
-        abortSignal: AbortSignal.timeout(60_000),
+        abortSignal: AbortSignal.timeout(90_000),
       })
       const prose: Block[] = output.paragraphs.map((p, i) => ({
         id: hashId('p', chapter.id, String(i)),

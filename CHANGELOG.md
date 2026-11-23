@@ -7,6 +7,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [1.0.1] - 2026-11-23
 
 ### Added
+- A "Pull requests" chapter in every book: open PRs, merged or closed ones, failing CI first, each linked to GitHub. The Board collector reads PR mirror threads (`pr=owner/repo#n` with `state`, `ci`, `review` labels).
+- A rewritten writing brief: lede first, one story per paragraph, every friction item in the prose, every claim cited.
 - `FOLIO_REASONING` sets the reasoning effort of the writing model and the chat (AI SDK portable `reasoning`, default `minimal`).
 - `FOLIO_BOARD_NEEDS_LABEL` chooses which Board label marks a "needs you" item.
 

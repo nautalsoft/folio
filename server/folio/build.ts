@@ -69,6 +69,9 @@ function formatDeadline(value: string, lang: ReportLanguage, timeZone = 'UTC') {
   return new Intl.DateTimeFormat(lang === 'en' ? 'en-US' : 'fr-FR', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit', timeZone }).format(date)
 }
 
+const isPullRequest = (fact: FactInput) => fact.kind === 'pr' || fact.kind.startsWith('pr.') || fact.kind === 'pull_request'
+const PR_ORDER: Record<WorkStatus, number> = { blocked: 0, waiting: 1, info: 2, done: 3 }
+
 const COLLECTOR_ORDER: CollectorKind[] = ['board', 'github', 'vercel', 'slack', 'clickup', 'notion']
 
 function chapterStatus(statuses: WorkStatus[]): WorkStatus | 'mixed' {
@@ -105,7 +108,7 @@ export function buildDayBook(input: DayInputs, lang: ReportLanguage): BuiltBook 
       entry.facts.push(fact)
       byAgent.set(fact.agentId, entry)
     }
-    else {
+    else if (!isPullRequest(fact)) {
       bySource.set(fact.source, [...(bySource.get(fact.source) ?? []), fact])
     }
   }
@@ -186,6 +189,17 @@ export function buildDayBook(input: DayInputs, lang: ReportLanguage): BuiltBook 
     needsBlocks.push({ id: hashId('b', 'needs', need.id), type: 'fact', text: `${need.title}${need.detail ? ` — ${need.detail}` : ''}${extra ? ` (${extra})` : ''}`, status: need.kind === 'blocker' ? 'blocked' : 'waiting', cites: [id], at: need.createdAt })
   }
 
+  const prs = input.facts.filter(isPullRequest).sort((a, b) => PR_ORDER[a.status] - PR_ORDER[b.status] || b.occurredAt.localeCompare(a.occurredAt))
+  const prBlocks: Block[] = []
+  if (prs.length) {
+    prBlocks.push({ id: hashId('b', 'prs', 'intro'), type: 'paragraph', text: t.prIntro(prs.filter(p => p.status === 'done').length, prs.filter(p => p.status !== 'done').length, prs.filter(p => p.status === 'blocked').length) })
+    for (const pr of prs) {
+      if (pr.project) projects.add(pr.project)
+      const id = cite({ id: `c_${pr.id}`, source: pr.source, label: pr.label, url: pr.url, at: pr.occurredAt })
+      prBlocks.push({ id: hashId('b', 'prs', pr.id), type: 'fact', text: `${pr.label} — ${pr.title}${pr.body ? ` (${pr.body})` : ''}`, status: pr.status, cites: [id], at: pr.occurredAt })
+    }
+  }
+
   const runBlocks: Block[] = []
   let incomplete = false
   const reportedSources = input.runs.map(r => r.source).filter(s => !COLLECTOR_ORDER.includes(s as CollectorKind))
@@ -213,6 +227,7 @@ export function buildDayBook(input: DayInputs, lang: ReportLanguage): BuiltBook 
     { id: 'preface', title: t.preface, kind: 'preface', sources: [], status: input.needs.length ? 'waiting' : 'info', blocks: preface },
   ]
   if (input.needs.length) all.push({ id: 'needs', title: t.needs, kind: 'needs', sources: [...new Set(input.needs.map(n => n.source))], status: 'waiting', blocks: needsBlocks })
+  if (prs.length) all.push({ id: 'pull-requests', title: t.pullRequests, kind: 'source', sources: [...new Set(prs.map(p => p.source))], status: chapterStatus(prs.map(p => p.status)), ...span(prs.map(p => p.occurredAt)), blocks: prBlocks })
   all.push(...chapters)
   all.push({ id: 'sources', title: t.sourcesChapter, kind: 'sources', sources: [], status: incomplete ? 'blocked' : 'info', blocks: runBlocks })
 

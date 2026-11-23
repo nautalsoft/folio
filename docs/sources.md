@@ -51,7 +51,8 @@ Uses the official [`@vercel/board`](https://github.com/vercel/board#readme) SDK,
   - The SDK doesn't expose when a claim started, so `claimedAt` is null.
 - **Needs.**
   - A task in state `blocked` (held for a person) becomes a `blocker`, with the block's kind and reason as its detail.
-  - A thread root labelled `needs=<kind>` becomes a need of that kind (`decision`, `review` or `blocker`). Any other value, such as `needs=you`, becomes a `decision`. Set the label with `vb label <id> needs=review`. If your board already uses another key for this, set `FOLIO_BOARD_NEEDS_LABEL` to it (for example `FOLIO_BOARD_NEEDS_LABEL=waiting-on`).
+  - A thread root labelled `pr=owner/repo#n` (the GitHub mirror convention, with `state`, `ci` and `review` labels) becomes a pull request fact linked to GitHub: every open or draft PR, every day, and merged or closed ones on the day their thread moves.
+- A thread root labelled `needs=<kind>` becomes a need of that kind (`decision`, `review` or `blocker`). Any other value, such as `needs=you`, becomes a `decision`. Set the label with `vb label <id> needs=review`. If your board already uses another key for this, set `FOLIO_BOARD_NEEDS_LABEL` to it (for example `FOLIO_BOARD_NEEDS_LABEL=waiting-on`).
 
 **Limits:**
 

@@ -15,7 +15,7 @@ const base = (over: Partial<DayInputs> = {}): DayInputs => ({
 })
 
 const fact = (id: string, over: Record<string, unknown> = {}) => ({
-  id, source: 'github', kind: 'pull_request', status: 'done' as const, title: `Fact ${id}`, body: '', url: `https://example.com/${id}`, label: id, agentId: null, project: 'P', occurredAt: '2026-11-23T10:00:00Z', ...over,
+  id, source: 'github', kind: 'thread', status: 'done' as const, title: `Fact ${id}`, body: '', url: `https://example.com/${id}`, label: id, agentId: null, project: 'P', occurredAt: '2026-11-23T10:00:00Z', ...over,
 })
 
 describe('buildDayBook', () => {
@@ -78,5 +78,21 @@ describe('buildMonthBook', () => {
     const month = buildMonthBook('2026-11', [{ slug: '2026-11-23', day: '2026-11-23', title: day.title, content: day.content, agents: day.agents, projects: day.projects, incomplete: false }], 'fr')
     expect(month.title).toBe('Novembre 2026')
     expect(month.content.chapters.map(c => c.id)).toContain('day-2026-11-23')
+  })
+})
+
+describe('pull requests', () => {
+  it('gather every PR in their own chapter, failing ones first, linked to GitHub', () => {
+    const book = buildDayBook(base({ facts: [
+      fact('p1', { kind: 'pr.merged', status: 'done', source: 'board', label: 'acme/www#1', url: 'https://github.com/acme/www/pull/1' }),
+      fact('p2', { kind: 'pr', status: 'blocked', source: 'board', label: 'acme/www#2', url: 'https://github.com/acme/www/pull/2', body: 'state open · CI failure' }),
+      fact('x', { kind: 'thread', source: 'board' }),
+    ] }), 'fr')
+    const chapter = book.content.chapters.find(c => c.id === 'pull-requests')!
+    const facts = chapter.blocks.filter(b => b.type === 'fact') as { text: string, cites: string[] }[]
+    expect(facts.map(f => f.text.split(' ')[0])).toEqual(['acme/www#2', 'acme/www#1'])
+    expect(book.content.citations[facts[0]!.cites[0]!]!.url).toBe('https://github.com/acme/www/pull/2')
+    const boardChapter = book.content.chapters.find(c => c.id === 'source-board')!
+    expect(boardChapter.blocks.filter(b => b.type === 'fact')).toHaveLength(1)
   })
 })

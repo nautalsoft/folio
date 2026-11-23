@@ -5,6 +5,12 @@ export type ReportLanguage = 'fr' | 'en'
 const fr = {
   preface: 'Ouverture',
   needs: 'Besoin de toi',
+  pullRequests: 'Pull requests',
+  prIntro: (done: number, open: number, failing: number) => [
+    done ? `${done} PR fusionnée${done > 1 ? 's' : ''} ou fermée${done > 1 ? 's' : ''}` : '',
+    open ? `${open} ouverte${open > 1 ? 's' : ''}` : '',
+    failing ? `dont ${failing} en échec (CI ou relecture)` : '',
+  ].filter(Boolean).join(', ').replace(/^./, c => c.toUpperCase()) + '.',
   sourcesChapter: 'État des sources',
   sourceTitles: {
     agent: 'Rapports d’agents',
@@ -37,6 +43,12 @@ const fr = {
 const en: typeof fr = {
   preface: 'Opening',
   needs: 'Needs you',
+  pullRequests: 'Pull requests',
+  prIntro: (done, open, failing) => [
+    done ? `${done} PR merged or closed` : '',
+    open ? `${open} open` : '',
+    failing ? `${failing} of them failing (CI or review)` : '',
+  ].filter(Boolean).join(', ').replace(/^./, c => c.toUpperCase()) + '.',
   sourcesChapter: 'Source status',
   sourceTitles: {
     agent: 'Agent reports',

@@ -60,6 +60,54 @@ async function activeThreads(team: Board, channel: string, ctx: CollectContext) 
   return threads
 }
 
+const PR_URL = /https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/pull\/\d+/i
+
+// GitHub sync (Board's, or any mirror script) labels a PR thread's root `pr=owner/repo#n`, with `state`, `ci` and `review`.
+function pullRequest(t: ThreadSummaryView, ctx: CollectContext): CollectedFact | null {
+  const m = t.message
+  const ref = m.labels.pr
+  if (!ref || m.deleted) return null
+  const state = (m.labels.state || 'open').toLowerCase()
+  const ci = (m.labels.ci || '').toLowerCase()
+  const review = (m.labels.review || '').toLowerCase()
+  const active = Date.parse(activity(t)) >= ctx.start.getTime() && Date.parse(activity(t)) < ctx.end.getTime()
+  const open = state === 'open' || state === 'draft'
+  if (!open && !active) return null
+  const [, repo = '', number = ''] = /^([^#]+)#(\d+)$/.exec(ref) ?? []
+  const url = PR_URL.exec(m.text)?.[0] ?? (repo && number ? `https://github.com/${repo}/pull/${number}` : '')
+  if (!url) return null
+  const status: WorkStatus = state === 'merged' || state === 'closed'
+    ? 'done'
+    : ci === 'failure' || review === 'changes_requested' ? 'blocked' : /request|pending/.test(review) ? 'waiting' : 'info'
+  return {
+    externalId: `pr:${ref.toLowerCase()}`,
+    kind: state === 'merged' ? 'pr.merged' : state === 'closed' ? 'pr.closed' : 'pr',
+    status,
+    title: firstLine(m.text),
+    body: [`state ${state}`, ci && `CI ${ci}`, review && `review ${review}`].filter(Boolean).join(' · '),
+    url,
+    label: ref,
+    actor: actorOf(m),
+    project: m.labels.repo || repo.split('/').pop() || m.channel,
+    occurredAt: activity(t),
+  }
+}
+
+async function pullRequests(team: Board, channel: string, ctx: CollectContext) {
+  const found: CollectedFact[] = []
+  let before: string | undefined
+  for (let page = 0; page < MAX_PAGES; page++) {
+    const data = await call(() => team.threads({ channel, label: ['pr'], limit: 500, before }), ctx.signal)
+    for (const t of data.threads) {
+      const pr = pullRequest(t, ctx)
+      if (pr) found.push(pr)
+    }
+    if (!data.older) break
+    before = data.older
+  }
+  return found
+}
+
 function need(m: MessageView, url: string): CollectedNeed | null {
   if (m.task?.state === 'blocked') {
     const reason = m.task.blocked ? [m.task.blocked.kind, m.task.blocked.reason].filter(Boolean).join(': ') : ''
@@ -123,13 +171,14 @@ export const board: Collector = {
       for (const t of await activeThreads(team, channel, ctx)) {
         const thread = t.replies === 0 ? { message: t.message, replies: [] } : await call(() => team.thread(t.message.id), ctx.signal)
         for (const m of [thread.message, ...thread.replies]) {
-          if (m.deleted || !inRange(m.createdAt, ctx.start, ctx.end)) continue
+          if (m.deleted || !inRange(m.createdAt, ctx.start, ctx.end) || (!m.re && m.labels.pr)) continue
           const state = m.re ? undefined : m.task?.state
           facts.push({ externalId: `msg:${m.id}`, kind: m.re ? 'reply' : m.task ? 'task' : 'thread', status: (state && TASK_STATUS[state]) || 'info', title: firstLine(m.text), body: m.text, url, label: `#${m.channel}`, actor: actorOf(m), project: m.channel, occurredAt: m.createdAt })
         }
         const n = need(t.message, url)
         if (n) needs.set(n.externalId, n)
       }
+      facts.push(...await pullRequests(team, channel, ctx))
     }
     const work: CollectedWork[] = []
     const scopes = list(process.env.FOLIO_BOARD_CHANNELS)
