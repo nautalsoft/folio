@@ -19,6 +19,8 @@ test('reading turns pages, cites sources and remembers the place', async ({ page
   const footer = page.locator('footer')
   await page.locator('article[data-ready]').waitFor()
   await expect(footer).toContainText('Page 1 sur')
+  const fits = await page.evaluate(() => document.querySelector('.reader-viewport')!.getBoundingClientRect().bottom <= innerHeight)
+  expect(fits, 'the paged viewport stays within the screen, so long chapters flow onto more pages').toBe(true)
   if (isMobile) await page.getByRole('button', { name: 'Page suivante' }).click()
   else await page.keyboard.press('ArrowRight')
   await expect(footer).toContainText('Page 2 sur')

@@ -1,5 +1,5 @@
 import type { AgentKind, Block, BookContent, Chapter, ChapterAgent, Citation, CollectorKind, SourceKind, SourceRunSummary, WorkStatus } from '../../shared/types/folio'
-import { bookStrings, formatDayTitle, formatMonthTitle, sourceTitle, type ReportLanguage } from '../../shared/utils/book-strings'
+import { bookStrings, formatDayTitle, formatMonthTitle, formatPrState, sourceTitle, type ReportLanguage } from '../../shared/utils/book-strings'
 import type { ReportItem } from '../db/schema'
 import { hashId } from '../utils/ids'
 
@@ -196,7 +196,7 @@ export function buildDayBook(input: DayInputs, lang: ReportLanguage): BuiltBook 
     for (const pr of prs) {
       if (pr.project) projects.add(pr.project)
       const id = cite({ id: `c_${pr.id}`, source: pr.source, label: pr.label, url: pr.url, at: pr.occurredAt })
-      prBlocks.push({ id: hashId('b', 'prs', pr.id), type: 'fact', text: `${pr.label} — ${pr.title}${pr.body ? ` (${pr.body})` : ''}`, status: pr.status, cites: [id], at: pr.occurredAt })
+      prBlocks.push({ id: hashId('b', 'prs', pr.id), type: 'fact', text: `${pr.label} — ${pr.title}${pr.body ? ` (${formatPrState(pr.body, lang)})` : ''}`, status: pr.status, cites: [id], at: pr.occurredAt })
     }
   }
 

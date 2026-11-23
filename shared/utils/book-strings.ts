@@ -88,6 +88,15 @@ export function sourceTitle(source: SourceKind, lang: ReportLanguage = 'fr'): st
 
 export const sourceSlug = (value: string) => value.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40)
 
+const PR_WORDS: Record<ReportLanguage, Record<string, string>> = {
+  fr: { 'state open': 'ouverte', 'state draft': 'brouillon', 'state merged': 'fusionnée', 'state closed': 'fermée', 'CI success': 'CI réussie', 'CI failure': 'CI en échec', 'CI pending': 'CI en cours', 'CI none': 'sans CI', 'review none': 'aucune revue', 'review approved': 'approuvée', 'review changes_requested': 'modifications demandées', 'review requested': 'revue demandée', 'review commented': 'commentée' },
+  en: { 'state open': 'open', 'state draft': 'draft', 'state merged': 'merged', 'state closed': 'closed', 'CI success': 'CI passing', 'CI failure': 'CI failing', 'CI pending': 'CI running', 'CI none': 'no CI', 'review none': 'no review', 'review approved': 'approved', 'review changes_requested': 'changes requested', 'review requested': 'review requested', 'review commented': 'commented' },
+}
+
+export function formatPrState(body: string, lang: ReportLanguage) {
+  return body.split(' · ').map(part => PR_WORDS[lang][part] ?? part).join(' · ')
+}
+
 export function formatDayTitle(day: string, lang: ReportLanguage) {
   const date = new Date(`${day}T12:00:00Z`)
   const text = new Intl.DateTimeFormat(lang === 'en' ? 'en-US' : 'fr-FR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' }).format(date)

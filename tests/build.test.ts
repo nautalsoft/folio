@@ -96,3 +96,10 @@ describe('pull requests', () => {
     expect(boardChapter.blocks.filter(b => b.type === 'fact')).toHaveLength(1)
   })
 })
+
+describe('pull request states', () => {
+  it('are written in the book language', async () => {
+    const { formatPrState } = await import('../shared/utils/book-strings')
+    expect(formatPrState('state draft · CI failure · review none', 'fr')).toBe('brouillon · CI en échec · aucune revue')
+  })
+})

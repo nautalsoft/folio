@@ -460,7 +460,7 @@ const formatDate = useFormatDate()
 </script>
 
 <template>
-  <div v-if="data" class="reader min-h-dvh flex flex-col" @pointermove="onPointerMove">
+  <div v-if="data" class="reader flex flex-col" :class="paged && !editing ? 'h-dvh overflow-hidden' : 'min-h-dvh'" @pointermove="onPointerMove">
     <header class="reader-bar sticky top-0 z-20 flex items-center gap-1 px-2 sm:px-4 h-14 font-sans" style="background: var(--r-bg); color: var(--r-ink)">
       <NuxtLink to="/" class="btn btn-ghost btn-icon" :aria-label="t('reader.close')" @click="saveState(true)">
         <ArrowLeftIcon :size="20" aria-hidden="true" />
@@ -527,8 +527,8 @@ const formatDate = useFormatDate()
 
     <div
       v-show="!editing" ref="viewport"
-      class="reader-viewport flex-1"
-      :style="paged ? { height: 'calc(100dvh - 7rem)', paddingInline: 'var(--r-margin)' } : { paddingInline: 'var(--r-margin)' }"
+      class="reader-viewport flex-1 min-h-0"
+      :style="{ paddingInline: 'var(--r-margin)' }"
       @pointerdown="onPointerDown" @pointerup="onPointerUp"
     >
       <article ref="columns" class="reader-columns reader-text" :aria-label="data.summary.title" :lang="data.language" :data-ready="ready || undefined" @focusin="onFocusIn">

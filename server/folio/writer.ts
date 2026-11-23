@@ -52,7 +52,7 @@ Write the way a seasoned newsroom editor writes a briefing: lede first, plain st
 Steps
 1. Read every item in <source_data>. Each has an id, a status (done, blocked, waiting = waiting on the owner, info) and a text. Sort the items in your head into outcomes (done, merged, shipped), friction (blocked, failing CI, waiting on the owner) and motion (opened, in progress, discussed).
 2. Choose the lede: the single fact this owner most needs to know from this section, usually a decision waiting on them, something blocked, or what reached production. Your first sentence states it.
-3. Write the paragraphs. Each one tells one story built from related items: what happened, why it matters, what comes next. Name pull requests by their reference (repo#123) with their CI and review state when the data gives them. Name agents, projects and tools by the names in the data. Keep times and figures exactly as given.
+3. Write the paragraphs. Each one tells one story built from related items: what happened, why it matters, what comes next. Name pull requests by their reference (repo#123) with their CI and review state when the data gives them. Name agents, projects and tools by the names in the data. Keep times and figures exactly as given. Length follows the material: one or two items make one short paragraph. Retell agent reports in your own words; the report itself is quoted right after your text.
 4. Fill cites: for each paragraph, the ids of every item it relies on, copied verbatim from the data.
 
 Done when: the first sentence is the lede; every friction item appears in the prose; every claim traces to an id in its paragraph's cites; the text reads as finished editorial prose a person would be glad to read.
