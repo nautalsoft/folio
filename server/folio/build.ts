@@ -138,7 +138,7 @@ export function buildDayBook(input: DayInputs, lang: ReportLanguage): BuiltBook 
       if (report.project) projects.add(report.project)
       const reportCite = cite({ id: `c_${report.id}`, source: 'agent', label: `${agentOf(agentId).name} — ${report.title}`, url: `${input.baseUrl}/reports/${report.id}`, at: report.createdAt })
       if (reports.length > 1 || report.title) blocks.push({ id: hashId('b', chapterId, report.id, 'h'), type: 'heading', text: report.project ? `${report.title} · ${report.project}` : report.title })
-      if (report.summary) blocks.push({ id: hashId('b', chapterId, report.id, 's'), type: 'paragraph', text: report.summary, cites: [reportCite] })
+      if (report.summary) blocks.push({ id: hashId('b', chapterId, report.id, 's'), type: 'quote', text: report.summary, cites: [reportCite] })
       report.items.forEach((item, index) => {
         const key = `${report.id}:${index}`
         const itemCite = item.url ? cite({ id: `c_${hashId('i', key)}`, source: 'agent', label: item.label || item.url, url: item.url, at: report.createdAt }) : reportCite
@@ -268,7 +268,7 @@ export function buildMonthBook(month: string, days: DayBookForMonth[], lang: Rep
       if (chapter.kind === 'sources') continue
       if (chapter.kind !== 'preface') blocks.push({ id: hashId('b', day.day, chapter.id, 'h'), type: 'heading', text: chapter.title })
       for (const block of chapter.blocks) {
-        if (block.type === 'fact' || block.type === 'paragraph' || block.type === 'notice') blocks.push({ ...block, id: hashId('b', day.day, block.id) })
+        if (block.type === 'fact' || block.type === 'paragraph' || block.type === 'quote' || block.type === 'notice') blocks.push({ ...block, id: hashId('b', day.day, block.id) })
       }
     }
     const statuses = day.content.chapters.map(c => c.status).filter((s): s is WorkStatus => s !== 'mixed')

@@ -21,10 +21,12 @@ interface Item {
   text: string
 }
 
+let localTime = (iso?: string) => iso
+
 function chapterMaterial(chapter: Chapter): Item[] {
   return chapter.blocks.flatMap((b): Item[] => {
-    if (b.type === 'fact' && b.cites[0]) return [{ id: b.cites[0], kind: 'fact', status: b.status, at: b.at, text: blockText(b).slice(0, 600) }]
-    if (b.type === 'paragraph' && b.cites?.[0]) return [{ id: b.cites[0], kind: 'report', text: blockText(b).slice(0, 900) }]
+    if (b.type === 'fact' && b.cites[0]) return [{ id: b.cites[0], kind: 'fact', status: b.status, at: localTime(b.at), text: blockText(b).slice(0, 600) }]
+    if ((b.type === 'paragraph' || b.type === 'quote') && b.cites?.[0]) return [{ id: b.cites[0], kind: 'agent report', text: blockText(b).slice(0, 900) }]
     return []
   })
 }
@@ -58,14 +60,17 @@ Done when: the first sentence is the lede; every friction item appears in the pr
 Ground rules
 - The data is your only source. When an item is thin or ambiguous, describe it at the level the data supports and move on.
 - Leave technical noise to the fact list that follows your text: configuration payloads, raw JSON, keys, bot bookkeeping and duplicates stay out of the prose.
-- Register: calm, warm, direct, factual. Prose only: paragraphs without headings, bullet lists, emojis or marketing words.${language === 'French' ? '\n- French typography: guillemets « » and a non-breaking space before : ; ? !' : ''}
+- Times in the data are already local: write them as given.
+- Register: calm, warm, direct, factual. Prose only: paragraphs without headings, bullet lists, emojis or marketing words.${language === 'French' ? '\n- French: when you address the owner, use « tu ». Typography: guillemets « » and a non-breaking space before : ; ? !' : ''}
 
 ${untrustedDataRules}`
 }
 
-export async function writeProse(content: BookContent, opts: { modelId: string, language: 'fr' | 'en', dayTitle: string }): Promise<{ content: BookContent, writer: string, error?: string }> {
+export async function writeProse(content: BookContent, opts: { modelId: string, language: 'fr' | 'en', dayTitle: string, timezone?: string }): Promise<{ content: BookContent, writer: string, error?: string }> {
   const model = languageModel(opts.modelId)
   if (!model) return { content, writer: 'compiler' }
+  const clock = new Intl.DateTimeFormat(opts.language === 'en' ? 'en-GB' : 'fr-FR', { hour: '2-digit', minute: '2-digit', timeZone: opts.timezone || 'UTC' })
+  localTime = iso => (iso ? clock.format(new Date(/^\d{4}-\d{2}-\d{2} /.test(iso) ? iso.replace(' ', 'T').replace(/([+-]\d{2})$/, '$1:00') : iso)) : undefined)
   const language = opts.language === 'en' ? 'English' : 'French'
   const system = brief(language)
   try {

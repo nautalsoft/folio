@@ -110,7 +110,7 @@ export async function compileDay(day: string, options: CompileOptions): Promise<
   let writer = 'compiler'
   let writerError: string | undefined
   if (options.useModel !== false && !built.empty) {
-    const written = await writeProse(content, { modelId: settings.model, language: settings.reportLanguage, dayTitle: built.title })
+    const written = await writeProse(content, { modelId: settings.model, language: settings.reportLanguage, dayTitle: built.title, timezone: settings.timezone })
     content = written.content
     writer = written.writer
     writerError = written.error
