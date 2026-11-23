@@ -12,6 +12,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `FOLIO_REASONING` sets the reasoning effort of the writing model and the chat (AI SDK portable `reasoning`, default `minimal`).
 - `FOLIO_BOARD_NEEDS_LABEL` chooses which Board label marks a "needs you" item.
 
+### Fixed
+- Board facts and tasks link to a page a person can open (the link the message carries, `FOLIO_BOARD_LINK`, or Folio's new fact page), never to the board's API URL.
+- Long chapters paginate instead of overflowing the screen in paged mode.
+
 ### Security
 - Credentials found in source or agent text (web push subscriptions, GitHub/Slack/OpenAI/Anthropic tokens, private keys, JWTs, bearer tokens…) are masked before they are stored, so they never reach a book, an export or a prompt.
 

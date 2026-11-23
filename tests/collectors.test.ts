@@ -226,7 +226,7 @@ describe('board', () => {
     }
     const result = await board.collect(ctx())
     expect(result.facts.map(f => [f.externalId, f.kind, f.actor])).toEqual([['msg:m1', 'thread', 'claude'], ['msg:m2', 'reply', 'claude']])
-    expect(result.facts[0]!.url).toBe('https://board.example/api/board')
+    expect(result.facts[0]!.url).toBe('')
     expect(result.needs).toEqual([
       expect.objectContaining({ externalId: 'label:m1', kind: 'review' }),
       expect.objectContaining({ externalId: 'task:t1', kind: 'blocker', detail: 'awaiting_approval: approve prod?' }),

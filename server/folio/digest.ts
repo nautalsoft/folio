@@ -44,7 +44,7 @@ export async function collectSource(kind: CollectorKind, day: string): Promise<S
         status: fact.status,
         title: redactSecrets(fact.title).slice(0, 500),
         body: redactSecrets(fact.body ?? '').slice(0, 2000),
-        url: fact.url,
+        url: fact.url || `/facts/${id}`,
         label: fact.label.slice(0, 200),
         actor: fact.actor ?? null,
         agentId: resolveAgent(kind, fact.actor, agentIds),
@@ -67,13 +67,13 @@ export async function collectSource(kind: CollectorKind, day: string): Promise<S
         deadline: need.deadline ?? null,
         blocking: need.blocking ?? [],
         externalKey: need.externalId,
-      }).onConflictDoUpdate({ target: [schema.needs.source, schema.needs.externalKey], set: { title: redactSecrets(need.title).slice(0, 500), detail: redactSecrets(need.detail ?? '').slice(0, 2000), deadline: need.deadline ?? null, blocking: need.blocking ?? [] } })
+      }).onConflictDoUpdate({ target: [schema.needs.source, schema.needs.externalKey], set: { sourceUrl: need.url, title: redactSecrets(need.title).slice(0, 500), detail: redactSecrets(need.detail ?? '').slice(0, 2000), deadline: need.deadline ?? null, blocking: need.blocking ?? [] } })
     }
     for (const work of result.work ?? []) {
       const id = hashId('w', kind, work.externalId)
       const claimedBy = resolveAgent(kind, work.claimedBy, agentIds) ?? work.claimedBy
       await db.insert(schema.workItems).values({ id, title: redactSecrets(work.title).slice(0, 500), project: work.project ?? null, source: kind, sourceUrl: work.url, status: work.status, claimedBy, claimedAt: work.claimedAt, heartbeatAt: work.heartbeatAt, updatedAt: new Date().toISOString() })
-        .onConflictDoUpdate({ target: schema.workItems.id, set: { title: redactSecrets(work.title).slice(0, 500), status: work.status, claimedBy, claimedAt: work.claimedAt, heartbeatAt: work.heartbeatAt, updatedAt: new Date().toISOString() } })
+        .onConflictDoUpdate({ target: schema.workItems.id, set: { title: redactSecrets(work.title).slice(0, 500), sourceUrl: work.url, status: work.status, claimedBy, claimedAt: work.claimedAt, heartbeatAt: work.heartbeatAt, updatedAt: new Date().toISOString() } })
       if (work.checkpoint) {
         await db.insert(schema.checkpoints).values({ id: hashId('k', id, work.checkpoint.at), workItemId: id, agentId: claimedBy, note: redactSecrets(work.checkpoint.note).slice(0, 2000), createdAt: work.checkpoint.at }).onConflictDoNothing()
       }

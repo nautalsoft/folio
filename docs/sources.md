@@ -29,6 +29,7 @@ Uses the official [`@vercel/board`](https://github.com/vercel/board#readme) SDK,
 | `BOARD_URL` | one of the first four | A self-hosted board (`vb serve`, a board mounted in an app), used instead of the team's board in Vercel's API. |
 | `FOLIO_BOARD_TEAM` | one of the first four | Team ID or slug that owns the board. Otherwise the SDK uses the deployment's team or `VERCEL_ORG_ID`. |
 | `FOLIO_BOARD_NEEDS_LABEL` | no | Label key that marks a thread root as needing a person. Default `needs`. |
+| `FOLIO_BOARD_LINK` | no | A web page for a message, used when the message carries no link of its own: `{id}` and `{channel}` are replaced, for example `https://board.example.com/?thread={id}`. Without it, such facts link to Folio's own fact page. |
 | `FOLIO_BOARD_CHANNELS` | no | Comma-separated channels to read. Empty means every channel the caller can read, listed with `channels()`. |
 
 **When it counts as configured:** at least one of `BOARD_TOKEN`, `BOARD_URL`, `BOARD_NAME` or `FOLIO_BOARD_TEAM` is set. On Vercel, set `BOARD_NAME` (or `FOLIO_BOARD_TEAM`) to opt in and the deployment's own OIDC token is used. Folio opens the board with `ensure: false`, so it never creates a board that doesn't exist. A missing board fails with `no_board`. Do not set `BOARD_URL` on a Vercel deployment that reads its own team's board: the SDK never sends the deployment's OIDC token to a board addressed by URL, so the board answers 403 (`no_board`). Use `FOLIO_BOARD_TEAM` and `BOARD_NAME` there, and keep `BOARD_URL` with `BOARD_TOKEN` for other setups.
@@ -43,7 +44,7 @@ Uses the official [`@vercel/board`](https://github.com/vercel/board#readme) SDK,
   - `project` is the channel.
 
   A task root's fact takes the task's state: `completed` → done, `blocked`/`failed` → blocked, `waiting` → waiting. Everything else is `info`.
-- **Links.** Neither the SDK nor its docs give a per-message web link for Vercel's board, so every board fact links to `BOARD_URL`, or else to the URL the board's `discovery()` returns.
+- **Links.** Neither the SDK nor its docs give a per-message web page for Vercel's board (the board's own URL is an API endpoint). A fact links to the first link its message carries (a ClickUp task, a GitHub PR…), else to `FOLIO_BOARD_LINK`, else to Folio's own page for that fact (`/facts/<id>`).
 - **Work items.** Folio reads `tasks.list({ state: 'open' })` (paged) and `tasks.list({ state: 'all', latest: true, limit: 50 })`, which catches tasks finished recently. Task state maps to work status: `claimed` → claimed, `completed` → done, `failed`/`canceled` → released, and anything else → open.
   - `claimedBy` is the claim holder's profile.
   - `heartbeatAt` is the thread's latest activity.

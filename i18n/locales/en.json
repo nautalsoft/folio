@@ -347,5 +347,9 @@
     "close": "Close",
     "back": "Back",
     "notFound": "Not found"
+  },
+  "fact": {
+    "title": "Fact",
+    "noLink": "This source has no page to open: here is the fact as Folio collected it."
   }
 }

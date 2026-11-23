@@ -347,5 +347,9 @@
     "close": "Fermer",
     "back": "Retour",
     "notFound": "Introuvable"
+  },
+  "fact": {
+    "title": "Fait",
+    "noLink": "Cette source ne fournit pas de page à ouvrir : voici le fait tel que Folio l’a collecté."
   }
 }

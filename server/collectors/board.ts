@@ -29,7 +29,23 @@ async function call<T>(run: () => Promise<T>, signal?: AbortSignal): Promise<T> 
 // An actor ID is `principal` or `principal+profile`; the profile (an agent's name) is what Folio maps to agents.
 const profileOf = (actor: string) => actor.includes('+') ? actor.slice(actor.lastIndexOf('+') + 1) : actor
 const actorOf = (m: MessageView) => m.by.profile ?? m.author?.handle ?? m.by.actor
-const firstLine = (text: string) => text.trim().split('\n')[0]!.slice(0, 200) || '(attachment)'
+const firstLine = (text: string) => text.trim().split('\n')[0]!.slice(0, 200)
+
+// A page a person can open: a link the message carries (ClickUp, GitHub…), else FOLIO_BOARD_LINK with {id}.
+// The board's own URL is an API endpoint, so it is never used as a link.
+function linkOf(m: MessageView): string {
+  const carried = [...m.text.matchAll(/https?:\/\/[^\s)>\]"']+/g)].map(x => x[0]).find(u => !/^https?:\/\/api\.vercel\.com\//.test(u))
+  if (carried) return carried
+  const template = process.env.FOLIO_BOARD_LINK
+  return template ? template.replace('{id}', encodeURIComponent(m.id)).replace('{channel}', encodeURIComponent(m.channel)) : ''
+}
+
+function titleOf(m: MessageView): string {
+  const line = firstLine(m.text)
+  if (line) return line
+  const labels = Object.entries(m.labels).filter(([k]) => !k.startsWith('board.')).map(([k, v]) => `${k}=${v}`).join(' ')
+  return labels ? `#${m.channel} · ${labels}` : `#${m.channel}`
+}
 const activity = (t: ThreadSummaryView) => t.last?.createdAt ?? t.message.createdAt
 
 async function channels(team: Board, signal: AbortSignal) {
@@ -83,7 +99,7 @@ function pullRequest(t: ThreadSummaryView, ctx: CollectContext): CollectedFact |
     externalId: `pr:${ref.toLowerCase()}`,
     kind: state === 'merged' ? 'pr.merged' : state === 'closed' ? 'pr.closed' : 'pr',
     status,
-    title: firstLine(m.text),
+    title: titleOf(m),
     body: [`state ${state}`, ci && `CI ${ci}`, review && `review ${review}`].filter(Boolean).join(' · '),
     url,
     label: ref,
@@ -108,14 +124,14 @@ async function pullRequests(team: Board, channel: string, ctx: CollectContext) {
   return found
 }
 
-function need(m: MessageView, url: string): CollectedNeed | null {
+function need(m: MessageView): CollectedNeed | null {
   if (m.task?.state === 'blocked') {
     const reason = m.task.blocked ? [m.task.blocked.kind, m.task.blocked.reason].filter(Boolean).join(': ') : ''
-    return { externalId: `task:${m.id}`, kind: 'blocker', title: firstLine(m.text), detail: reason, url, actor: profileOf(m.task.by) }
+    return { externalId: `task:${m.id}`, kind: 'blocker', title: titleOf(m), detail: reason, url: linkOf(m) || null, actor: profileOf(m.task.by) }
   }
   const label = m.labels[process.env.FOLIO_BOARD_NEEDS_LABEL || 'needs']
   if (!label) return null
-  return { externalId: `label:${m.id}`, kind: NEED_KINDS.has(label) ? label as CollectedNeed['kind'] : 'decision', title: firstLine(m.text), detail: m.text, url, actor: actorOf(m) }
+  return { externalId: `label:${m.id}`, kind: NEED_KINDS.has(label) ? label as CollectedNeed['kind'] : 'decision', title: titleOf(m), detail: m.text, url: linkOf(m) || null, actor: actorOf(m) }
 }
 
 async function tasks(team: Board, channel: string | undefined, signal: AbortSignal) {
@@ -132,13 +148,13 @@ async function tasks(team: Board, channel: string | undefined, signal: AbortSign
   return [...found.values()]
 }
 
-function workItem(t: ThreadSummaryView, url: string): CollectedWork {
+function workItem(t: ThreadSummaryView): CollectedWork {
   const { message: m, last } = t
   const state = m.task!.state
   return {
     externalId: `task:${m.id}`,
-    title: firstLine(m.text),
-    url,
+    title: titleOf(m),
+    url: linkOf(m) || null,
     project: m.channel,
     claimedBy: state === 'claimed' && m.task!.claim ? profileOf(m.task!.claim.actor) : null,
     claimedAt: null,
@@ -158,12 +174,12 @@ export const board: Collector = {
     { name: 'BOARD_URL', required: false, description: 'A board\'s URL instead of the team board; it never receives the deployment\'s OIDC token, so pair it with BOARD_TOKEN' },
     { name: 'FOLIO_BOARD_TEAM', required: false, description: 'Team ID or slug owning the board (else VERCEL_ORG_ID or the deployment\'s team)' },
     { name: 'FOLIO_BOARD_NEEDS_LABEL', required: false, description: 'Label key that marks a thread root as needing a person (default: needs)' },
+    { name: 'FOLIO_BOARD_LINK', required: false, description: 'Web page for a message, with {id} and {channel}, used when the message carries no link of its own' },
     { name: 'FOLIO_BOARD_CHANNELS', required: false, description: 'Comma-separated channels to read; all readable channels when empty' },
   ],
   configured: () => Boolean(process.env.BOARD_TOKEN || process.env.BOARD_URL || process.env.BOARD_NAME || process.env.FOLIO_BOARD_TEAM),
   async collect(ctx) {
     const team = client()
-    const url = process.env.BOARD_URL || (await call(() => team.discovery(), ctx.signal)).url
     const facts: CollectedFact[] = []
     const needs = new Map<string, CollectedNeed>()
     const names = await channels(team, ctx.signal)
@@ -173,9 +189,9 @@ export const board: Collector = {
         for (const m of [thread.message, ...thread.replies]) {
           if (m.deleted || !inRange(m.createdAt, ctx.start, ctx.end) || (!m.re && m.labels.pr)) continue
           const state = m.re ? undefined : m.task?.state
-          facts.push({ externalId: `msg:${m.id}`, kind: m.re ? 'reply' : m.task ? 'task' : 'thread', status: (state && TASK_STATUS[state]) || 'info', title: firstLine(m.text), body: m.text, url, label: `#${m.channel}`, actor: actorOf(m), project: m.channel, occurredAt: m.createdAt })
+          facts.push({ externalId: `msg:${m.id}`, kind: m.re ? 'reply' : m.task ? 'task' : 'thread', status: (state && TASK_STATUS[state]) || 'info', title: titleOf(m), body: m.text, url: linkOf(m), label: `#${m.channel}`, actor: actorOf(m), project: m.channel, occurredAt: m.createdAt })
         }
-        const n = need(t.message, url)
+        const n = need(t.message)
         if (n) needs.set(n.externalId, n)
       }
       facts.push(...await pullRequests(team, channel, ctx))
@@ -184,8 +200,8 @@ export const board: Collector = {
     const scopes = list(process.env.FOLIO_BOARD_CHANNELS)
     for (const channel of scopes.length ? scopes : [undefined]) {
       for (const t of await tasks(team, channel, ctx.signal)) {
-        work.push(workItem(t, url))
-        const n = need(t.message, url)
+        work.push(workItem(t))
+        const n = need(t.message)
         if (n) needs.set(n.externalId, n)
       }
     }
