@@ -4,11 +4,12 @@ import type { Block, BookContent, Chapter } from '../../shared/types/folio'
 import { blockText } from '../../shared/utils/reading'
 import { hashId } from '../utils/ids'
 
+// Loose on purpose: a strict limit makes the whole answer fail validation; lengths are clamped below.
 const proseSchema = z.object({
   paragraphs: z.array(z.object({
-    text: z.string().min(1).max(1400),
-    cites: z.array(z.string()).max(12),
-  })).min(1).max(3),
+    text: z.string().min(1),
+    cites: z.array(z.string()),
+  })).min(1),
 })
 
 interface Item {
@@ -68,38 +69,45 @@ export async function writeProse(content: BookContent, opts: { modelId: string, 
   const language = opts.language === 'en' ? 'English' : 'French'
   const system = brief(language)
   try {
+    let firstError: string | undefined
     const chapters = await Promise.all(content.chapters.map(async (chapter) => {
-      if (chapter.kind !== 'agent' && chapter.kind !== 'source' && chapter.kind !== 'preface') return chapter
-      const material = chapter.kind === 'preface' ? prefaceMaterial(content) : chapterMaterial(chapter)
-      if (!material.length) return chapter
-      const allowed = new Set(material.map(m => m.id))
-      const section = chapter.kind === 'preface'
-        ? 'the opening of the book: an overview of the whole day in 1 or 2 paragraphs, friction first'
-        : chapter.id === 'pull-requests'
-          ? 'the pull requests of the day: 1 or 2 paragraphs on what was merged, what is failing and what awaits review'
-          : chapter.agent
-            ? `the chapter of the agent ${chapter.agent.name} (${chapter.agent.kind}): 1 to 3 paragraphs`
-            : `the chapter for the source ${chapter.title}: 1 or 2 paragraphs`
-      const { output } = await generateText({
-        model,
-        reasoning: reasoningLevel(),
-        output: Output.object({ schema: proseSchema }),
-        system,
-        prompt: `Book: ${opts.dayTitle}. Section: ${section}.\n\n${isolate(material)}`,
-        maxRetries: 1,
-        abortSignal: AbortSignal.timeout(90_000),
-      })
-      const prose: Block[] = output.paragraphs.map((p, i) => ({
-        id: hashId('p', chapter.id, String(i)),
-        type: 'paragraph',
-        text: p.text,
-        cites: p.cites.filter(id => allowed.has(id)),
-      }))
-      const [first, ...rest] = chapter.blocks
-      const keep = first?.type === 'paragraph' && !first.cites?.length ? rest : chapter.blocks
-      return { ...chapter, blocks: [...prose, ...keep] }
+      try {
+        if (chapter.kind !== 'agent' && chapter.kind !== 'source' && chapter.kind !== 'preface') return chapter
+        const material = chapter.kind === 'preface' ? prefaceMaterial(content) : chapterMaterial(chapter)
+        if (!material.length) return chapter
+        const allowed = new Set(material.map(m => m.id))
+        const section = chapter.kind === 'preface'
+          ? 'the opening of the book: an overview of the whole day in 1 or 2 paragraphs, friction first'
+          : chapter.id === 'pull-requests'
+            ? 'the pull requests of the day: 1 or 2 paragraphs on what was merged, what is failing and what awaits review'
+            : chapter.agent
+              ? `the chapter of the agent ${chapter.agent.name} (${chapter.agent.kind}): 1 to 3 paragraphs`
+              : `the chapter for the source ${chapter.title}: 1 or 2 paragraphs`
+        const { output } = await generateText({
+          model,
+          reasoning: reasoningLevel(),
+          output: Output.object({ schema: proseSchema }),
+          system,
+          prompt: `Book: ${opts.dayTitle}. Section: ${section}.\n\n${isolate(material)}`,
+          maxRetries: 1,
+          abortSignal: AbortSignal.timeout(90_000),
+        })
+        const prose: Block[] = output.paragraphs.slice(0, 3).map((p, i) => ({
+          id: hashId('p', chapter.id, String(i)),
+          type: 'paragraph',
+          text: p.text.trim().slice(0, 2400),
+          cites: [...new Set(p.cites.filter(id => allowed.has(id)))].slice(0, 40),
+        }))
+        const [first, ...rest] = chapter.blocks
+        const keep = first?.type === 'paragraph' && !first.cites?.length ? rest : chapter.blocks
+        return { ...chapter, blocks: [...prose, ...keep] }
+      }
+      catch (error) {
+        firstError ??= `${chapter.title}: ${error instanceof Error ? error.message.slice(0, 160) : 'model error'}`
+        return chapter
+      }
     }))
-    return { content: { ...content, chapters }, writer: opts.modelId }
+    return { content: { ...content, chapters }, writer: opts.modelId, error: firstError }
   }
   catch (error) {
     return { content, writer: 'compiler', error: error instanceof Error ? error.message.slice(0, 200) : 'model error' }
