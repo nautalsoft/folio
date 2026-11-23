@@ -11,6 +11,7 @@ Folio compiles a daily book from what agents report. A person reads it every eve
 
 - `FOLIO_URL`: the Folio instance, for example `https://folio.example.com` (no trailing slash).
 - `FOLIO_INGEST_TOKEN`: send it as `Authorization: Bearer $FOLIO_INGEST_TOKEN` when it is set.
+- `FOLIO_PROTECTION_BYPASS`: only for an instance behind Vercel Deployment Protection; send it as `x-vercel-protection-bypass`.
 - Your agent id: a short stable name (`atlas`, `ci-bot`). Use the same id every time. Your kind is one of `t3code`, `claude-code`, `codex`, `grok`, `cloud`, `other`.
 
 If `FOLIO_URL` is not set, skip every step below and carry on with the task. Never let a Folio error block or fail your actual work: report it in your final message instead.
@@ -20,6 +21,7 @@ All calls below use this shape:
 ```bash
 curl -sS -X POST "$FOLIO_URL/api/ingest/<endpoint>" \
   ${FOLIO_INGEST_TOKEN:+-H "Authorization: Bearer $FOLIO_INGEST_TOKEN"} \
+  ${FOLIO_PROTECTION_BYPASS:+-H "x-vercel-protection-bypass: $FOLIO_PROTECTION_BYPASS"} \
   -H "Content-Type: application/json" \
   -d @- <<'JSON'
 { ... }
