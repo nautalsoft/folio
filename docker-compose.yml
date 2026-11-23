@@ -1,0 +1,59 @@
+services:
+  folio:
+    build: .
+    image: folio:latest
+    restart: unless-stopped
+    ports:
+      - "${FOLIO_PORT:-3000}:3000"
+    environment:
+      DATABASE_URL: postgres://folio:folio@db:5432/folio
+      FOLIO_PUBLIC_URL: ${FOLIO_PUBLIC_URL:-}
+      FOLIO_INGEST_TOKEN: ${FOLIO_INGEST_TOKEN:-}
+      CRON_SECRET: ${CRON_SECRET:-}
+      FOLIO_WEBHOOK_SECRET: ${FOLIO_WEBHOOK_SECRET:-}
+      FOLIO_DEMO: ${FOLIO_DEMO:-true}
+      FOLIO_TIMEZONE: ${FOLIO_TIMEZONE:-Europe/Paris}
+      FOLIO_DIGEST_TIME: ${FOLIO_DIGEST_TIME:-18:00}
+      FOLIO_REPORT_LANGUAGE: ${FOLIO_REPORT_LANGUAGE:-fr}
+      FOLIO_MODEL: ${FOLIO_MODEL:-anthropic/claude-sonnet-5.5}
+      FOLIO_AGENT_ALIASES: ${FOLIO_AGENT_ALIASES:-}
+      AI_GATEWAY_API_KEY: ${AI_GATEWAY_API_KEY:-}
+      FOLIO_AI_BASE_URL: ${FOLIO_AI_BASE_URL:-}
+      FOLIO_AI_API_KEY: ${FOLIO_AI_API_KEY:-}
+      BOARD_TOKEN: ${BOARD_TOKEN:-}
+      BOARD_NAME: ${BOARD_NAME:-}
+      BOARD_URL: ${BOARD_URL:-}
+      FOLIO_BOARD_TEAM: ${FOLIO_BOARD_TEAM:-}
+      FOLIO_BOARD_CHANNELS: ${FOLIO_BOARD_CHANNELS:-}
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      GITHUB_REPOS: ${GITHUB_REPOS:-}
+      VERCEL_TOKEN: ${VERCEL_TOKEN:-}
+      VERCEL_TEAM_ID: ${VERCEL_TEAM_ID:-}
+      FOLIO_VERCEL_PROJECTS: ${FOLIO_VERCEL_PROJECTS:-}
+      SLACK_BOT_TOKEN: ${SLACK_BOT_TOKEN:-}
+      SLACK_CHANNEL_IDS: ${SLACK_CHANNEL_IDS:-}
+      CLICKUP_TOKEN: ${CLICKUP_TOKEN:-}
+      CLICKUP_TEAM_ID: ${CLICKUP_TEAM_ID:-}
+      FOLIO_SLACK_NEEDS_KEYWORD: ${FOLIO_SLACK_NEEDS_KEYWORD:-}
+      NOTION_TOKEN: ${NOTION_TOKEN:-}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: folio
+      POSTGRES_PASSWORD: folio
+      POSTGRES_DB: folio
+    volumes:
+      - folio-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U folio -d folio"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  folio-db:

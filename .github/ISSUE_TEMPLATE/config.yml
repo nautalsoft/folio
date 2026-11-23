@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions and ideas
+    url: https://github.com/nautalsoft/folio/discussions
+    about: Ask a question, share how you use Folio, or discuss an idea before opening an issue.
+  - name: Security vulnerability
+    url: https://github.com/nautalsoft/folio/security/advisories/new
+    about: Report vulnerabilities privately. Never in a public issue.

@@ -1,0 +1,6 @@
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Placeholders used in docs and examples"
+regexes = ['''YOUR_[A-Z_]+''', '''postgres://folio:folio@db:5432/folio''']

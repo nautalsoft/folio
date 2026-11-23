@@ -1,0 +1,60 @@
+{
+  "name": "folio",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "preview": "nuxt preview",
+    "start": "node .output/server/index.mjs",
+    "postinstall": "nuxt prepare",
+    "typecheck": "nuxt typecheck",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "db:generate": "drizzle-kit generate"
+  },
+  "dependencies": {
+    "@ai-sdk/openai-compatible": "^3.0.94",
+    "@ai-sdk/vue": "^4.0.179",
+    "@electric-sql/pglite": "^0.5.17",
+    "@fontsource-variable/eb-garamond": "^5.3.0",
+    "@fontsource-variable/jetbrains-mono": "^5.3.0",
+    "@fontsource-variable/libre-franklin": "^5.3.0",
+    "@fontsource-variable/source-serif-4": "^5.3.1",
+    "@fontsource/atkinson-hyperlegible": "^5.3.0",
+    "@lucide/vue": "^1.77.0",
+    "@nuxtjs/i18n": "^10.6.0",
+    "@ui-sdk/core": "0.1.0-beta.13",
+    "@ui-sdk/vue": "0.1.0-beta.13",
+    "@vercel/board": "^0.54.0",
+    "ai": "^7.0.179",
+    "drizzle-orm": "^0.45.4",
+    "fflate": "^0.8.3",
+    "nuxt": "^4.6.4",
+    "pdfkit": "^0.21.0",
+    "postgres": "^4.1.1",
+    "vue": "^3.5.45",
+    "vue-router": "^5.4.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@playwright/test": "^1.65.1",
+    "@tailwindcss/vite": "^4.3.5",
+    "@types/pdfkit": "^0.17.7",
+    "@vue/test-utils": "^2.6.0",
+    "drizzle-kit": "^0.31.11",
+    "jsdom": "^31.0.1",
+    "tailwindcss": "^4.3.5",
+    "typescript": "^6.0.3",
+    "vitest": "^5.1.1",
+    "vue-tsc": "^3.3.14"
+  },
+  "version": "1.0.0",
+  "description": "Read your AI agents’ daily work as a book.",
+  "license": "MIT",
+  "packageManager": "pnpm@10.34.9",
+  "engines": {
+    "node": ">=22.18"
+  }
+}

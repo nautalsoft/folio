@@ -1,0 +1,79 @@
+name: Bug report
+description: Something in Folio doesn't work as documented.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. Please remove tokens, private URLs and real people's data from everything you paste here: this issue is public.
+        Security problems go through [private vulnerability reporting](https://github.com/nautalsoft/folio/security/advisories/new), not here.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Start Folio with `docker compose up`
+        2. Push this report: ...
+        3. Open ...
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Folio version
+      description: Shown by `GET /api/health`, or the release / commit you run.
+      placeholder: 1.0.0
+    validations:
+      required: true
+  - type: dropdown
+    id: deployment
+    attributes:
+      label: Deployment
+      options:
+        - Docker Compose
+        - Vercel
+        - Node (self-hosted, without Docker)
+        - Local development (pnpm dev)
+    validations:
+      required: true
+  - type: dropdown
+    id: storage
+    attributes:
+      label: Storage
+      options:
+        - Postgres (DATABASE_URL / POSTGRES_URL)
+        - PGlite on disk (FOLIO_DATA_DIR)
+        - In memory
+        - Not sure
+  - type: dropdown
+    id: ai
+    attributes:
+      label: AI
+      options:
+        - No model
+        - Vercel AI Gateway
+        - OpenAI-compatible server
+        - Not sure
+  - type: input
+    id: area
+    attributes:
+      label: Area
+      description: Reader, library, a collector (which one), ingest API, automation, webhooks, export...
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or API responses
+      description: Server logs, HTTP status and response body. Redact anything private.
+      render: text
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and OS
+      description: For interface bugs.

@@ -1,0 +1,33 @@
+name: Feature request
+description: Suggest an improvement or a new capability.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For open-ended ideas, [Discussions](https://github.com/nautalsoft/folio/discussions) are a better place to start. Check the [roadmap](https://github.com/nautalsoft/folio/blob/main/ROADMAP.md) too.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What are you trying to do, and what gets in the way today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: What you would like Folio to do. Mockups and example payloads are welcome (fictional data only).
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives
+      description: Workarounds you use today, or other approaches you considered. For a new source, can `POST /api/ingest/facts` cover it?
+  - type: checkboxes
+    id: contribute
+    attributes:
+      label: Contribution
+      options:
+        - label: I would like to work on this myself.
