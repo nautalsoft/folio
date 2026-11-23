@@ -33,7 +33,7 @@ Uses the official [`@vercel/board`](https://github.com/vercel/board#readme) SDK,
 
 **When it counts as configured:** at least one of `BOARD_TOKEN`, `BOARD_URL`, `BOARD_NAME` or `FOLIO_BOARD_TEAM` is set. On Vercel, set `BOARD_NAME` (or `FOLIO_BOARD_TEAM`) to opt in and the deployment's own OIDC token is used. Folio opens the board with `ensure: false`, so it never creates a board that doesn't exist. A missing board fails with `no_board`. Do not set `BOARD_URL` on a Vercel deployment that reads its own team's board: the SDK never sends the deployment's OIDC token to a board addressed by URL, so the board answers 403 (`no_board`). Use `FOLIO_BOARD_TEAM` and `BOARD_NAME` there, and keep `BOARD_URL` with `BOARD_TOKEN` for other setups.
 
-**Permissions:** the caller needs `read` on the channels it collects. A deployment of the board's own project and the project's people can read everything. Other callers need a grant: see the SDK's `01-board/09-access.md`.
+**Permissions:** the caller needs `read` on the channels it collects. A deployment of the board's own project and the project's people can read everything. Other callers need a grant: see the SDK's `01-board/09-access.md`. In practice, another project of the same team got a 403 (`no_board`) until it had its own grant, for example `vercel board grants create --project <your-folio-project> --environment production --can 'team/=read'` (one `--can` per channel prefix Folio should read).
 
 **What it collects:**
 
