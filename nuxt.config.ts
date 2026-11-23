@@ -30,7 +30,7 @@ export default defineNuxtConfig({
     ],
     detectBrowserLanguage: { useCookie: true, cookieKey: 'folio_locale', redirectOn: 'root', fallbackLocale: 'fr' },
   },
-  runtimeConfig: { public: { version: '1.0.0' } },
+  runtimeConfig: { public: { version: '1.0.1' } },
   nitro: {
     serverAssets: [{ baseName: 'migrations', dir: './server/db/migrations' }],
     externals: { inline: [] },

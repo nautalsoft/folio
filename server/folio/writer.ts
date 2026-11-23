@@ -31,6 +31,7 @@ export async function writeProse(content: BookContent, opts: { modelId: string, 
       const allowed = new Set(material.flatMap(m => m.cites ?? []))
       const { output } = await generateText({
         model,
+        reasoning: reasoningLevel(),
         output: Output.object({ schema: proseSchema }),
         system: [
           `You write one short section of a daily book that reports what AI coding agents did. Write in ${language}, plainly, like a good editor: concrete, calm, no hype, no emojis, no headings.`,

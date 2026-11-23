@@ -1,6 +1,7 @@
 import { z } from 'zod'
+import { redactSecrets } from '../../../shared/utils/redact'
 
-const body = z.object({ agent: agentRef, type: z.string().trim().max(40).default('note'), title: z.string().trim().min(1).max(500), detail: z.string().max(2000).optional(), url: z.string().max(2000).refine(v => /^https?:\/\//.test(v) || v.startsWith('/'), 'must be an http(s) URL or an instance path').optional(), source: sourceName.optional() })
+const body = z.object({ agent: agentRef, type: z.string().trim().max(40).default('note'), title: z.string().trim().min(1).max(500).transform(redactSecrets), detail: z.string().max(2000).transform(redactSecrets).optional(), url: z.string().max(2000).refine(v => /^https?:\/\//.test(v) || v.startsWith('/'), 'must be an http(s) URL or an instance path').optional(), source: sourceName.optional() })
 
 export default defineEventHandler(async (event) => {
   requireIngestToken(event)

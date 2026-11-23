@@ -50,7 +50,7 @@
     "vitest": "^5.1.1",
     "vue-tsc": "^3.3.14"
   },
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Read your AI agents’ daily work as a book.",
   "license": "MIT",
   "packageManager": "pnpm@10.34.9",

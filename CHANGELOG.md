@@ -4,6 +4,15 @@ All notable changes to Folio are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2026-11-23
+
+### Added
+- `FOLIO_REASONING` sets the reasoning effort of the writing model and the chat (AI SDK portable `reasoning`, default `minimal`).
+- `FOLIO_BOARD_NEEDS_LABEL` chooses which Board label marks a "needs you" item.
+
+### Security
+- Credentials found in source or agent text (web push subscriptions, GitHub/Slack/OpenAI/Anthropic tokens, private keys, JWTs, bearer tokens…) are masked before they are stored, so they never reach a book, an export or a prompt.
+
 ## [Unreleased]
 
 ## [1.0.0] — 2026-11-23

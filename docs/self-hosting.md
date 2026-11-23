@@ -120,7 +120,7 @@ location /api/live {
 
 Without a model, books are compiled from the facts alone and the chat answers with passage search. To have a model write the prose:
 
-- **Vercel AI Gateway:** set `AI_GATEWAY_API_KEY`. `FOLIO_MODEL` (or Settings) picks the model, default `anthropic/claude-sonnet-5.5`.
+- **Vercel AI Gateway:** set `AI_GATEWAY_API_KEY`. `FOLIO_MODEL` (or Settings) picks the model, default `anthropic/claude-sonnet-5.5`, and `FOLIO_REASONING` its reasoning effort (default `minimal`).
 - **Any OpenAI-compatible server** (a local inference server, a hosted provider): set `FOLIO_AI_BASE_URL` (for example `http://localhost:11434/v1`), `FOLIO_AI_API_KEY` if it needs one, and `FOLIO_MODEL` to a model name that server knows. `FOLIO_AI_BASE_URL` takes precedence over the gateway.
 
 The writer asks the model for structured JSON. If the call fails (model unavailable, invalid output, 60-second timeout), the book keeps the compiled text and the run reports `writerError`.

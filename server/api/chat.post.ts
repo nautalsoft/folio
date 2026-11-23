@@ -105,6 +105,7 @@ export default defineEventHandler(async (event) => {
       try {
         const result = streamText({
           model,
+          reasoning: reasoningLevel(),
           system: [
             `You answer questions about a daily book that reports what AI agents did. Answer in ${settings.reportLanguage === 'en' ? 'English' : 'French'}, briefly and plainly.`,
             'Use only the numbered passages. After each claim, cite the passage numbers in square brackets, like [3] or [3][7]. If the passages do not answer, say so. Never invent facts.',

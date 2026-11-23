@@ -22,3 +22,11 @@ export function isolate(data: unknown): string {
 }
 
 export const untrustedDataRules = SOURCE_RULES
+
+const REASONING = ['provider-default', 'none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max'] as const
+export type ReasoningLevel = typeof REASONING[number]
+
+export function reasoningLevel(): ReasoningLevel {
+  const value = process.env.FOLIO_REASONING as ReasoningLevel | undefined
+  return value && REASONING.includes(value) ? value : 'minimal'
+}

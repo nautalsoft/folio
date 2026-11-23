@@ -3,6 +3,7 @@ import type { CollectorKind, SourceRunSummary, WorkStatus } from '../../shared/t
 import { dayBounds, dayIn, timeIn } from '../../shared/utils/time'
 import { collectors } from '../collectors'
 import { hashId } from '../utils/ids'
+import { redactSecrets } from '../../shared/utils/redact'
 import { compileDay, type CompileResult } from './compile'
 
 export function resolveAgent(source: string, actor: string | null | undefined, agentIds: Set<string>): string | null {
@@ -41,8 +42,8 @@ export async function collectSource(kind: CollectorKind, day: string): Promise<S
         externalId: fact.externalId,
         kind: fact.kind,
         status: fact.status,
-        title: fact.title.slice(0, 500),
-        body: (fact.body ?? '').slice(0, 2000),
+        title: redactSecrets(fact.title).slice(0, 500),
+        body: redactSecrets(fact.body ?? '').slice(0, 2000),
         url: fact.url,
         label: fact.label.slice(0, 200),
         actor: fact.actor ?? null,
@@ -58,23 +59,23 @@ export async function collectSource(kind: CollectorKind, day: string): Promise<S
         id: hashId('n', kind, need.externalId),
         day,
         kind: need.kind,
-        title: need.title.slice(0, 500),
-        detail: (need.detail ?? '').slice(0, 2000),
+        title: redactSecrets(need.title).slice(0, 500),
+        detail: redactSecrets(need.detail ?? '').slice(0, 2000),
         agentId: resolveAgent(kind, need.actor, agentIds),
         source: kind,
         sourceUrl: need.url,
         deadline: need.deadline ?? null,
         blocking: need.blocking ?? [],
         externalKey: need.externalId,
-      }).onConflictDoUpdate({ target: [schema.needs.source, schema.needs.externalKey], set: { title: need.title.slice(0, 500), detail: (need.detail ?? '').slice(0, 2000), deadline: need.deadline ?? null, blocking: need.blocking ?? [] } })
+      }).onConflictDoUpdate({ target: [schema.needs.source, schema.needs.externalKey], set: { title: redactSecrets(need.title).slice(0, 500), detail: redactSecrets(need.detail ?? '').slice(0, 2000), deadline: need.deadline ?? null, blocking: need.blocking ?? [] } })
     }
     for (const work of result.work ?? []) {
       const id = hashId('w', kind, work.externalId)
       const claimedBy = resolveAgent(kind, work.claimedBy, agentIds) ?? work.claimedBy
-      await db.insert(schema.workItems).values({ id, title: work.title.slice(0, 500), project: work.project ?? null, source: kind, sourceUrl: work.url, status: work.status, claimedBy, claimedAt: work.claimedAt, heartbeatAt: work.heartbeatAt, updatedAt: new Date().toISOString() })
-        .onConflictDoUpdate({ target: schema.workItems.id, set: { title: work.title.slice(0, 500), status: work.status, claimedBy, claimedAt: work.claimedAt, heartbeatAt: work.heartbeatAt, updatedAt: new Date().toISOString() } })
+      await db.insert(schema.workItems).values({ id, title: redactSecrets(work.title).slice(0, 500), project: work.project ?? null, source: kind, sourceUrl: work.url, status: work.status, claimedBy, claimedAt: work.claimedAt, heartbeatAt: work.heartbeatAt, updatedAt: new Date().toISOString() })
+        .onConflictDoUpdate({ target: schema.workItems.id, set: { title: redactSecrets(work.title).slice(0, 500), status: work.status, claimedBy, claimedAt: work.claimedAt, heartbeatAt: work.heartbeatAt, updatedAt: new Date().toISOString() } })
       if (work.checkpoint) {
-        await db.insert(schema.checkpoints).values({ id: hashId('k', id, work.checkpoint.at), workItemId: id, agentId: claimedBy, note: work.checkpoint.note.slice(0, 2000), createdAt: work.checkpoint.at }).onConflictDoNothing()
+        await db.insert(schema.checkpoints).values({ id: hashId('k', id, work.checkpoint.at), workItemId: id, agentId: claimedBy, note: redactSecrets(work.checkpoint.note).slice(0, 2000), createdAt: work.checkpoint.at }).onConflictDoNothing()
       }
     }
     await logActivity({ type: 'source.collected', source: kind, title: `${collector.label} : ${result.facts.length}` })

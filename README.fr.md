@@ -86,6 +86,7 @@ Toute la configuration passe par des variables d'environnement. `.env.example` l
 | `FOLIO_TIMEZONE` | `Europe/Paris` | Fuseau horaire qui définit « une journée ». |
 | `FOLIO_REPORT_LANGUAGE` | `fr` | Langue des livres : `fr` ou `en`. |
 | `FOLIO_MODEL` | `anthropic/claude-sonnet-5.5` | Identifiant du modèle pour la rédaction et le chat. |
+| `FOLIO_REASONING` | `minimal` | Effort de réflexion pour la rédaction et le chat : `provider-default`, `none`, `minimal`, `low`, `medium`, `high`, `xhigh`, `max`. |
 | `AI_GATEWAY_API_KEY` | aucune | Clé Vercel AI Gateway. Inutile sur Vercel, qui passe par OIDC. |
 | `FOLIO_AI_BASE_URL`, `FOLIO_AI_API_KEY` | aucune | N'importe quel serveur compatible OpenAI à la place d'AI Gateway. |
 | `FOLIO_WEBHOOK_SECRET` | aucune | Signe les webhooks sortants. |
