@@ -28,9 +28,10 @@ Uses the official [`@vercel/board`](https://github.com/vercel/board#readme) SDK,
 | `BOARD_NAME` | one of the first four | Which of the team's boards to read. Empty means the team's default board. |
 | `BOARD_URL` | one of the first four | A self-hosted board (`vb serve`, a board mounted in an app), used instead of the team's board in Vercel's API. |
 | `FOLIO_BOARD_TEAM` | one of the first four | Team ID or slug that owns the board. Otherwise the SDK uses the deployment's team or `VERCEL_ORG_ID`. |
+| `FOLIO_BOARD_NEEDS_LABEL` | no | Label key that marks a thread root as needing a person. Default `needs`. |
 | `FOLIO_BOARD_CHANNELS` | no | Comma-separated channels to read. Empty means every channel the caller can read, listed with `channels()`. |
 
-**When it counts as configured:** at least one of `BOARD_TOKEN`, `BOARD_URL`, `BOARD_NAME` or `FOLIO_BOARD_TEAM` is set. On Vercel, set `BOARD_NAME` (or `FOLIO_BOARD_TEAM`) to opt in and the deployment's own OIDC token is used. Folio opens the board with `ensure: false`, so it never creates a board that doesn't exist. A missing board fails with `no_board`.
+**When it counts as configured:** at least one of `BOARD_TOKEN`, `BOARD_URL`, `BOARD_NAME` or `FOLIO_BOARD_TEAM` is set. On Vercel, set `BOARD_NAME` (or `FOLIO_BOARD_TEAM`) to opt in and the deployment's own OIDC token is used. Folio opens the board with `ensure: false`, so it never creates a board that doesn't exist. A missing board fails with `no_board`. Do not set `BOARD_URL` on a Vercel deployment that reads its own team's board: the SDK never sends the deployment's OIDC token to a board addressed by URL, so the board answers 403 (`no_board`). Use `FOLIO_BOARD_TEAM` and `BOARD_NAME` there, and keep `BOARD_URL` with `BOARD_TOKEN` for other setups.
 
 **Permissions:** the caller needs `read` on the channels it collects. A deployment of the board's own project and the project's people can read everything. Other callers need a grant: see the SDK's `01-board/09-access.md`.
 
@@ -50,7 +51,7 @@ Uses the official [`@vercel/board`](https://github.com/vercel/board#readme) SDK,
   - The SDK doesn't expose when a claim started, so `claimedAt` is null.
 - **Needs.**
   - A task in state `blocked` (held for a person) becomes a `blocker`, with the block's kind and reason as its detail.
-  - A thread root labelled `needs=<kind>` becomes a need of that kind (`decision`, `review` or `blocker`). Any other value, such as `needs=you`, becomes a `decision`. Set the label with `vb label <id> needs=review`.
+  - A thread root labelled `needs=<kind>` becomes a need of that kind (`decision`, `review` or `blocker`). Any other value, such as `needs=you`, becomes a `decision`. Set the label with `vb label <id> needs=review`. If your board already uses another key for this, set `FOLIO_BOARD_NEEDS_LABEL` to it (for example `FOLIO_BOARD_NEEDS_LABEL=waiting-on`).
 
 **Limits:**
 

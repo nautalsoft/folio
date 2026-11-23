@@ -65,7 +65,7 @@ function need(m: MessageView, url: string): CollectedNeed | null {
     const reason = m.task.blocked ? [m.task.blocked.kind, m.task.blocked.reason].filter(Boolean).join(': ') : ''
     return { externalId: `task:${m.id}`, kind: 'blocker', title: firstLine(m.text), detail: reason, url, actor: profileOf(m.task.by) }
   }
-  const label = m.labels.needs
+  const label = m.labels[process.env.FOLIO_BOARD_NEEDS_LABEL || 'needs']
   if (!label) return null
   return { externalId: `label:${m.id}`, kind: NEED_KINDS.has(label) ? label as CollectedNeed['kind'] : 'decision', title: firstLine(m.text), detail: m.text, url, actor: actorOf(m) }
 }
@@ -107,8 +107,9 @@ export const board: Collector = {
   envVars: [
     { name: 'BOARD_TOKEN', required: false, description: 'OIDC token for the board (outside Vercel); on a Vercel deployment the deployment\'s OIDC token is used' },
     { name: 'BOARD_NAME', required: false, description: 'Which of the team\'s boards to read (default board when empty)' },
-    { name: 'BOARD_URL', required: false, description: 'A self-hosted board\'s URL instead of the team board in Vercel\'s API' },
+    { name: 'BOARD_URL', required: false, description: 'A board\'s URL instead of the team board; it never receives the deployment\'s OIDC token, so pair it with BOARD_TOKEN' },
     { name: 'FOLIO_BOARD_TEAM', required: false, description: 'Team ID or slug owning the board (else VERCEL_ORG_ID or the deployment\'s team)' },
+    { name: 'FOLIO_BOARD_NEEDS_LABEL', required: false, description: 'Label key that marks a thread root as needing a person (default: needs)' },
     { name: 'FOLIO_BOARD_CHANNELS', required: false, description: 'Comma-separated channels to read; all readable channels when empty' },
   ],
   configured: () => Boolean(process.env.BOARD_TOKEN || process.env.BOARD_URL || process.env.BOARD_NAME || process.env.FOLIO_BOARD_TEAM),
