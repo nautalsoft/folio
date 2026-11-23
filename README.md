@@ -269,3 +269,5 @@ Contributions are welcome: collectors, translations, reader improvements, bug fi
 ## License
 
 [MIT](LICENSE). Folio is a personal, self-hosted tool: the goal is that anyone can run it, change it and build on it with as few strings attached as possible. A copyleft license such as the AGPL mostly protects projects that sell a hosted cloud version against competitors; Folio has no hosted offer to protect.
+
+The logo uses the "book-open-text" icon from [Phosphor Icons](https://phosphoricons.com) (MIT, Copyright (c) 2023 Phosphor Icons).

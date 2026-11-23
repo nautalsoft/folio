@@ -269,3 +269,5 @@ Les contributions sont bienvenues : collecteurs, traductions, améliorations de 
 ## Licence
 
 [MIT](LICENSE). Folio est un outil personnel, auto-hébergé : le but est que chacun puisse le faire tourner, le modifier et construire dessus avec le moins de contraintes possible. Une licence copyleft comme l'AGPL protège surtout les projets qui vendent une version hébergée contre leurs concurrents ; Folio n'a pas d'offre hébergée à protéger.
+
+Le logo utilise l’icône « book-open-text » de [Phosphor Icons](https://phosphoricons.com) (MIT, Copyright (c) 2023 Phosphor Icons).
