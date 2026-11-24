@@ -24,6 +24,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+- Settings now shows the writer error when a digest publishes compiled text after an AI writing failure.
+
 ## [1.0.0] — 2026-11-23
 
 First public release.

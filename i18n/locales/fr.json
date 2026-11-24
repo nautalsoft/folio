@@ -315,6 +315,7 @@
     "runNow": "Collecter et publier maintenant",
     "running": "Collecte en cours…",
     "runDone": "Livre du jour mis à jour",
+    "runWriterError": "Livre publié avec le texte compilé. Vérifie la configuration de ton modèle.",
     "persistence": "Stockage",
     "persistentOn": "Les données sont conservées dans une base de données.",
     "persistentOff": "Mode démo éphémère : aucune base n’est configurée, les données disparaissent au redémarrage. Ajoute DATABASE_URL pour les conserver.",

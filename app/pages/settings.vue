@@ -68,8 +68,13 @@ const running = ref(false)
 async function runNow() {
   running.value = true
   try {
-    await $fetch('/api/digest', { method: 'POST', body: {} })
-    toast.success(t('settings.runDone'))
+    const result = await $fetch('/api/digest', { method: 'POST', body: {} })
+    if (result.book.writerError) {
+      toast.warning(t('settings.runWriterError'), { description: result.book.writerError, duration: 10000 })
+    }
+    else {
+      toast.success(t('settings.runDone'))
+    }
     await refresh()
   }
   catch {

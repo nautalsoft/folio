@@ -315,6 +315,7 @@
     "runNow": "Collect and publish now",
     "running": "Collecting…",
     "runDone": "Today’s book updated",
+    "runWriterError": "Book published with compiled text. Check your model configuration.",
     "persistence": "Storage",
     "persistentOn": "Data is kept in a database.",
     "persistentOff": "Ephemeral demo mode: no database is configured, data disappears on restart. Add DATABASE_URL to keep it.",
